@@ -64,12 +64,12 @@ jobs:
           mkdir -p allure-results
           # Копируем результаты из frontend
           if [ -d "frontend/allure-results" ]; then
-            cp -r frontend/allure-results/* allure-results/  true
+            cp -r frontend/allure-results/* allure-results/ || true
           fi
           # Копируем результаты из backend (проверяем все возможные места)
           find backend -type d -name "allure-results" -not -path "*/node_modules/*" | while read dir; do
             if [ -d "$dir" ] && [ "$(ls -A $dir 2>/dev/null)" ]; then
-              cp -r "$dir"/* allure-results/  true
+              cp -r "$dir"/* allure-results/ || true
             fi
           done
 
@@ -103,4 +103,5 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./allure-history
+          publish_dir: ./allure-report
+          keep_files: true
