@@ -34,7 +34,7 @@ public class WeatherForecastControllerTestsFixed
 
         // Act
         var result = controller.GetById(id);
-
+        //коммент для теста пайплайна 
         // Assert
         Assert.That(result, Is.Not.Null);
         // ИСПРАВЛЕННЫЙ ТЕСТ: проверяется правильное значение id
