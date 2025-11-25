@@ -81,6 +81,15 @@ jobs:
           ref: gh-pages
           path: gh-pages
 
+      - name: Generate Allure Report
+        if: always()
+        run: |
+          mkdir -p allure-report
+          if [ -d "gh-pages/allure-history" ]; then
+            cp -r gh-pages/allure-history allure-report/history
+          fi
+          allure generate allure-results -o allure-report --clean
+
       - name: Upload Allure Report
         if: always()
         uses: actions/upload-artifact@v4
