@@ -53,7 +53,6 @@ jobs:
           export ALLURE_RESULTS_DIR=${{ github.workspace }}/backend/allure-results
           dotnet test Tests/Tests.csproj
         continue-on-error: true
-
       - name: Download Allure CLI
         run: |
           wget -q https://github.com/allure-framework/allure2/releases/download/2.24.1/allure-2.24.1.tgz
@@ -64,9 +63,11 @@ jobs:
       - name: Collect all Allure results
         run: |
           mkdir -p allure-results
+          # Копируем результаты из frontend
           if [ -d "frontend/allure-results" ]; then
             cp -r frontend/allure-results/* allure-results/ || true
           fi
+          # Копируем результаты из backend (проверяем все возможные места)
           find backend -type d -name "allure-results" -not -path "*/node_modules/*" | while read dir; do
             if [ -d "$dir" ] && [ "$(ls -A $dir 2>/dev/null)" ]; then
               cp -r "$dir"/* allure-results/ || true
@@ -81,14 +82,14 @@ jobs:
           ref: gh-pages
           path: gh-pages
 
-      - name: Generate Allure Report
+      - name: Generate Allure Report with history
         if: always()
-        run: |
-          mkdir -p allure-report
-          if [ -d "gh-pages/allure-history" ]; then
-            cp -r gh-pages/allure-history allure-report/history
-          fi
-          allure generate allure-results -o allure-report --clean
+        uses: simple-elf/allure-report-action@master
+        with:
+          allure_results: allure-results
+          allure_report: allure-report
+          gh_pages: gh-pages
+          allure_history: allure-history
 
       - name: Upload Allure Report
         if: always()
