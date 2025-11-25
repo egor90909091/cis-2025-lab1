@@ -35,16 +35,16 @@ jobs:
         run: npm ci
         continue-on-error: true
 
-      - name: Restore .NET dependencies
-        working-directory: ./backend
-        run: dotnet restore
-
       - name: Run frontend tests
         working-directory: ./frontend
         run: npm run test:allure -- --run
         continue-on-error: true
         env:
           ALLURE_RESULTS_DIR: allure-results
+
+      - name: Restore .NET dependencies
+        working-directory: ./backend
+        run: dotnet restore
 
       - name: Run backend tests with Allure
         working-directory: ./backend
@@ -53,15 +53,6 @@ jobs:
           export ALLURE_RESULTS_DIR=${{ github.workspace }}/backend/allure-results
           dotnet test Tests/Tests.csproj
         continue-on-error: true
-
-      - name: Run build frontend
-        working-directory: ./frontend
-        run: npm run build
-        continue-on-error: true
-
-      - name: Run build backend
-        working-directory: ./backend
-        run: dotnet build
 
       - name: Download Allure CLI
         run: |
