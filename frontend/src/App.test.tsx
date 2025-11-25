@@ -18,7 +18,7 @@ describe('App', () => {
     
     await user.click(button)
     // TODO: сломанный тест
-    expect(button).toHaveTextContent('count is 0')
+    expect(button).toHaveTextContent('count is 1')
   })
 })
 

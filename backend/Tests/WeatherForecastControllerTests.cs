@@ -38,7 +38,7 @@ public class WeatherForecastControllerTests
         // Assert
         Assert.That(result, Is.Not.Null);
         // СЛОМАННЫЙ ТЕСТ: проверяется что id равен 0, но передается 1
-        Assert.That(id, Is.EqualTo(0));
+        Assert.That(id, Is.EqualTo(1));
     }
 }
 
