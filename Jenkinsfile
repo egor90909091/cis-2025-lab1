@@ -52,11 +52,7 @@ pipeline {
                 dir('frontend') {
                     script {
                         try {
-                            sh '''
-                                # Очищаем старые результаты
-                                rm -rf allure-results
-                                npm run test -- --run --reporter=allure-vitest/reporter
-                            '''
+                            sh 'npm run test -- --run --reporter=allure-vitest/reporter'
                         } catch (Exception e) {
                             echo "Frontend tests failed: ${e.getMessage()}"
                             currentBuild.result = 'UNSTABLE'
@@ -91,25 +87,11 @@ pipeline {
                     image "registry.access.redhat.com/ubi8/dotnet-80:8.0"
                 }
             }
-            environment {
-                ALLURE_RESULTS_DIR = "${WORKSPACE}/backend/allure-results"
-            }
             steps {
                 dir('backend') {
                     script {
                         try {
-                            sh '''
-                                # Очищаем старые результаты для избежания кэширования
-                                rm -rf allure-results
-                                mkdir -p allure-results
-                                export ALLURE_RESULTS_DIRECTORY=${WORKSPACE}/backend/allure-results
-                                echo "ALLURE_RESULTS_DIRECTORY is set to: ${ALLURE_RESULTS_DIRECTORY}"
-                                echo "Current directory: $(pwd)"
-                                dotnet test Tests/Tests.csproj --configuration Release --verbosity normal
-                                echo "Contents of allure-results:"
-                                ls -la allure-results/ || echo "allure-results directory is empty or does not exist"
-                                find . -name "allure-results" -type d -exec ls -la {} \\;
-                            '''
+                            sh 'ALLURE_OUTPUT=allure-results dotnet test --configuration Release --logger "trx" --results-directory ./test-results'
                         } catch (Exception e) {
                             echo "Backend tests failed: ${e.getMessage()}"
                             currentBuild.result = 'UNSTABLE'
@@ -141,11 +123,7 @@ pipeline {
         stage('Prepare Allure Results') {
             steps {
                 script {
-                    sh '''
-                        # Очищаем старые результаты для избежания кэширования
-                        rm -rf allure-results
-                        mkdir -p allure-results
-                    '''
+                    sh 'mkdir -p allure-results'
 
                     echo "=== Restoring Allure results from previous stages ==="
 
@@ -156,8 +134,7 @@ pipeline {
                             sh '''
                                 if [ -d "frontend/allure-results" ]; then
                                     echo "Restored frontend/allure-results, copying..."
-                                    cp -v frontend/allure-results/*.json allure-results/ 2>&1 | head -20 || true
-                                    echo "Frontend results copied"
+                                    cp -vr frontend/allure-results/* allure-results/ 2>&1 | head -20 || true
                                 fi
                             '''
                         } catch (Exception e) {
@@ -170,10 +147,9 @@ pipeline {
                         try {
                             unstash 'backend-allure-results'
                             sh '''
-                                if [ -d "backend/allure-results" ]; then
+                                if [ -d "backend/allure-results" ] || [ -d "backend/test-results" ]; then
                                     echo "Restored backend test results, copying..."
-                                    find backend/allure-results -type f \\( -name "*.json" -o -name "*.txt" -o -name "*.xml" \\) -exec cp -v {} allure-results/ \\; 2>&1 | head -20 || true
-                                    echo "Backend results copied"
+                                    cp -vr backend/allure-results/* allure-results/ 2>&1 || true
                                 fi
                             '''
                         } catch (Exception e) {
@@ -223,7 +199,7 @@ pipeline {
 
     post {
         always {
-            archiveArtifacts artifacts: 'allure-results/**,backend/allure-results/**,frontend/allure-results/**', fingerprint: true, allowEmptyArchive: true
+            archiveArtifacts artifacts: 'allure-results/**,backend/test-results/**,frontend/allure-results/**', fingerprint: true, allowEmptyArchive: true
         }
         failure {
             echo 'Pipeline failed. Check the test results in Allure Report.'
