@@ -91,8 +91,8 @@ pipeline {
                 dir('backend') {
                     script {
                         try {
-                            // Запускаем именно проект тестов, чтобы Allure получил результаты
-                            sh 'ALLURE_OUTPUT=allure-results dotnet test Tests/Tests.csproj --configuration Release --logger "trx" --results-directory ./test-results'
+                            // Используем правильную переменную ALLURE_RESULTS_DIRECTORY и абсолютный путь
+                            sh 'ALLURE_RESULTS_DIRECTORY="${WORKSPACE}/backend/allure-results" dotnet test Tests/Tests.csproj --configuration Release --logger "trx" --results-directory ./test-results'
                         } catch (Exception e) {
                             echo "Backend tests failed: ${e.getMessage()}"
                             currentBuild.result = 'UNSTABLE'
@@ -104,6 +104,7 @@ pipeline {
                 always {
                     dir('backend') {
                         script {
+                            // Проверяем наличие результатов в папке allure-results
                             def hasAllureResults = sh(
                                 script: 'test -d allure-results && [ "$(find allure-results -type f 2>/dev/null | wc -l)" -gt 0 ]',
                                 returnStatus: true
@@ -113,7 +114,8 @@ pipeline {
                                 echo "Stashing backend/allure-results"
                                 stash name: 'backend-allure-results', includes: 'allure-results/**', allowEmpty: false
                             } else {
-                                echo "No files in backend/allure-results, skipping stash"
+                                echo "No files in backend/allure-results, skipping stash. Content of backend dir:"
+                                sh 'ls -R'
                             }
                         }
                     }
