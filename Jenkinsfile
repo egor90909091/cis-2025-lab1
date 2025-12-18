@@ -104,7 +104,15 @@ pipeline {
                 always {
                     dir('backend') {
                         script {
-                            // Проверяем наличие результатов в папке allure-results
+                            // Собираем результаты из всех папок allure-results, которые могли создать тесты в подпапках bin/obj
+                            sh '''
+                                mkdir -p allure-results
+                                find . -type d -name "allure-results" -not -path "./allure-results" | while read dir; do
+                                    echo "Found results in $dir, copying..."
+                                    cp -vr "$dir"/* allure-results/ || true
+                                done
+                            '''
+                            
                             def hasAllureResults = sh(
                                 script: 'test -d allure-results && [ "$(find allure-results -type f 2>/dev/null | wc -l)" -gt 0 ]',
                                 returnStatus: true
@@ -114,8 +122,7 @@ pipeline {
                                 echo "Stashing backend/allure-results"
                                 stash name: 'backend-allure-results', includes: 'allure-results/**', allowEmpty: false
                             } else {
-                                echo "No files in backend/allure-results, skipping stash. Content of backend dir:"
-                                sh 'ls -R'
+                                echo "No Allure results found for backend."
                             }
                         }
                     }
