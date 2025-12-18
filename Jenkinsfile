@@ -87,18 +87,17 @@ pipeline {
                     image "registry.access.redhat.com/ubi8/dotnet-80:8.0"
                 }
             }
+            environment {
+                ALLURE_RESULTS_DIR = "${WORKSPACE}/backend/allure-results"
+            }
             steps {
                 dir('backend') {
                     script {
                         try {
-                            sh 'dotnet test --configuration Release --logger "trx" --results-directory ./test-results'
                             sh '''
                                 mkdir -p allure-results
-                                # Конвертируем TRX в Allure (если есть инструмент) или копируем результаты
-                                if [ -d "test-results" ]; then
-                                    echo "Backend test results found"
-                                    cp -r test-results/* allure-results/ 2>&1 || true
-                                fi
+                                export ALLURE_RESULTS_DIR=${WORKSPACE}/backend/allure-results
+                                dotnet test Tests/Tests.csproj --configuration Release
                             '''
                         } catch (Exception e) {
                             echo "Backend tests failed: ${e.getMessage()}"
@@ -156,10 +155,9 @@ pipeline {
                         try {
                             unstash 'backend-allure-results'
                             sh '''
-                                if [ -d "backend/allure-results" ] || [ -d "backend/test-results" ]; then
+                                if [ -d "backend/allure-results" ]; then
                                     echo "Restored backend test results, copying..."
-                                    cp -v backend/allure-results/*.json allure-results/ 2>&1 || true
-                                    cp -v backend/test-results/*.trx allure-results/ 2>&1 || true
+                                    find backend/allure-results -type f \\( -name "*.json" -o -name "*.txt" -o -name "*.xml" \\) -exec cp -v {} allure-results/ \\; 2>&1 | head -20 || true
                                     echo "Backend results copied"
                                 fi
                             '''
@@ -210,7 +208,7 @@ pipeline {
 
     post {
         always {
-            archiveArtifacts artifacts: 'allure-results/**,backend/test-results/**,frontend/allure-results/**', fingerprint: true, allowEmptyArchive: true
+            archiveArtifacts artifacts: 'allure-results/**,backend/allure-results/**,frontend/allure-results/**', fingerprint: true, allowEmptyArchive: true
         }
         failure {
             echo 'Pipeline failed. Check the test results in Allure Report.'
