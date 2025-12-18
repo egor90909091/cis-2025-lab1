@@ -96,12 +96,13 @@ pipeline {
                         try {
                             sh '''
                                 mkdir -p allure-results
-                                export ALLURE_RESULTS_DIR=${WORKSPACE}/backend/allure-results
-                                echo "ALLURE_RESULTS_DIR is set to: ${ALLURE_RESULTS_DIR}"
+                                export ALLURE_RESULTS_DIRECTORY=${WORKSPACE}/backend/allure-results
+                                echo "ALLURE_RESULTS_DIRECTORY is set to: ${ALLURE_RESULTS_DIRECTORY}"
                                 echo "Current directory: $(pwd)"
                                 dotnet test Tests/Tests.csproj --configuration Release --verbosity normal
                                 echo "Contents of allure-results:"
                                 ls -la allure-results/ || echo "allure-results directory is empty or does not exist"
+                                find . -name "allure-results" -type d -exec ls -la {} \\;
                             '''
                         } catch (Exception e) {
                             echo "Backend tests failed: ${e.getMessage()}"
