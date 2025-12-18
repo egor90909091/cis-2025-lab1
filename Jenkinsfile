@@ -52,7 +52,11 @@ pipeline {
                 dir('frontend') {
                     script {
                         try {
-                            sh 'npm run test -- --run --reporter=allure-vitest/reporter'
+                            sh '''
+                                # Очищаем старые результаты
+                                rm -rf allure-results
+                                npm run test -- --run --reporter=allure-vitest/reporter
+                            '''
                         } catch (Exception e) {
                             echo "Frontend tests failed: ${e.getMessage()}"
                             currentBuild.result = 'UNSTABLE'
@@ -95,6 +99,8 @@ pipeline {
                     script {
                         try {
                             sh '''
+                                # Очищаем старые результаты для избежания кэширования
+                                rm -rf allure-results
                                 mkdir -p allure-results
                                 export ALLURE_RESULTS_DIRECTORY=${WORKSPACE}/backend/allure-results
                                 echo "ALLURE_RESULTS_DIRECTORY is set to: ${ALLURE_RESULTS_DIRECTORY}"
@@ -135,7 +141,11 @@ pipeline {
         stage('Prepare Allure Results') {
             steps {
                 script {
-                    sh 'mkdir -p allure-results'
+                    sh '''
+                        # Очищаем старые результаты для избежания кэширования
+                        rm -rf allure-results
+                        mkdir -p allure-results
+                    '''
 
                     echo "=== Restoring Allure results from previous stages ==="
 
