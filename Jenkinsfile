@@ -91,7 +91,8 @@ pipeline {
                 dir('backend') {
                     script {
                         try {
-                            sh 'ALLURE_OUTPUT=allure-results dotnet test --configuration Release --logger "trx" --results-directory ./test-results'
+                            // Запускаем именно проект тестов, чтобы Allure получил результаты
+                            sh 'ALLURE_OUTPUT=allure-results dotnet test Tests/Tests.csproj --configuration Release --logger "trx" --results-directory ./test-results'
                         } catch (Exception e) {
                             echo "Backend tests failed: ${e.getMessage()}"
                             currentBuild.result = 'UNSTABLE'
